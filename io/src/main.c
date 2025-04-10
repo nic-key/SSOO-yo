@@ -8,6 +8,8 @@ int main(int argc, char* argv[]) {
         printf("Formato correcto: %s <nombre_interfaz>\n", argv[0]);
         return 1; // Retorna código de error
     }
+    char *nombre_interfaz = argv[1];
+    printf("[IO] Interfaz inicializada: %s\n", nombre_interfaz);
 
 
     saludar("io");
@@ -30,8 +32,6 @@ int main(int argc, char* argv[]) {
     LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
 
     logger = iniciar_logger(LOG_LEVEL);
-    char *nombre_interfaz = argv[1];
-    printf("[IO] Interfaz inicializada: %s\n", nombre_interfaz);
 
     // Handshake con el kernel
 
