@@ -4,7 +4,7 @@ include settings.mk
 
 outname = lib/lib$(1).a
 
-define compile_out
+define compile_out	
 	$(AR) $(ARFLAGS) "$@" $^
 endef
 

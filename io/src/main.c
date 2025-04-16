@@ -1,5 +1,6 @@
 #include <commons/log.h>
 #include <io.h>
+#include <utils/hello.h>
 
 int main(int argc, char* argv[]) {
 
@@ -34,10 +35,14 @@ int main(int argc, char* argv[]) {
     logger = iniciar_logger(LOG_LEVEL);
 
     // Handshake con el kernel
-
-
-    //enviara al kernel el nombre de la interfaz y quedara esperando peticiones del mismo
+    conexion = crear_conexion(IP_KERNEL,PUERTO_KERNEL);
+    if (conexion == -1) {
+    log_error(logger, "No se pudo establecer conexión con el Kernel");
+    return EXIT_FAILURE;
+    }
+    enviar_mensaje_handshake(nombre_interfaz,conexion);
     log_trace(logger, "[IO] Enviando nombre de interfaz al kernel: %s", nombre_interfaz);
+    //enviara al kernel el nombre de la interfaz y quedara esperando peticiones del mismo
     
     
     while(apagar_interfaz) {
