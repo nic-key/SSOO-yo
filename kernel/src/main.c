@@ -1,5 +1,54 @@
 #include <utils/hello.h>
 #include <kernel.h>
+#include <time.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <commons/log.h>
+#include <commons/config.h>
+#include <unistd.h>
+
+//TCB
+typedef enum {
+    NEW,
+    READY,
+    EXEC,
+    BLOCKED,
+    SUSPENDED_BLOCKED,
+    SUSPENDED_READY,
+    EXIT
+} estado_proceso;
+
+typedef struct {
+    int cantidad;
+    double tiempo_total;
+} metrica_estado;
+
+typedef struct {
+    int pid;
+    int pc;
+    int tamanio_memoria;
+    estado_proceso estado_actual;
+    metrica_estado metricas[7];
+    time_t tiempo_entrada_estado;
+} pcb_t;
+
+
+const char* nombre_estado(estado_proceso estado) {
+    switch (estado) {
+        case NEW: return "NEW";
+        case READY: return "READY";
+        case EXEC: return "EXEC";
+        case BLOCKED: return "BLOCKED";
+        case SUSPENDED_BLOCKED: return "SUSP. BLOCKED";
+        case SUSPENDED_READY: return "SUSP. READY";
+        case EXIT: return "EXIT";
+        default: return "DESCONOCIDO";
+    }
+}
+
+
 int main(int argc, char* argv[]) {
     /*
     if (argc != 3) {
@@ -45,7 +94,6 @@ int main(int argc, char* argv[]) {
 	t_log *logger;
 	t_config *config;
 
-
     config = iniciar_config();
     
     IP_MEMORIA = config_get_string_value(config, "IP_MEMORIA");
@@ -61,6 +109,44 @@ int main(int argc, char* argv[]) {
 
 
     logger = iniciar_logger(LOG_LEVEL);
+
+    pcb_t* pcb_inicial = crear_pcb(0, tamanio_proceso);
+
+    if (!pcb_inicial) {
+        log_error(logger, "Error al crear el PCB inicial");
+        log_destroy(logger);
+        config_destroy(config);
+        return EXIT_FAILURE;
+    }
+
+    log_info(logger, "## (%d) Se crea el proceso - Estado: NEW", pcb_inicial->pid);
+
+// Cambios de estado de ejemplo, habria que hacer esto en todos:
+sleep(1);
+cambiar_estado(pcb_inicial, READY);
+log_info(logger, "## (%d) Pasa del estado %s al estado %s",
+         pcb_inicial->pid,
+         nombre_estado(NEW),
+         nombre_estado(READY));
+
+
+sleep(2);
+cambiar_estado(pcb_inicial, EXEC);
+log_info(logger, "## (%d) Pasa del estado READY al estado EXEC", pcb_inicial->pid);
+
+sleep(1);
+cambiar_estado(pcb_inicial, EXIT);
+log_info(logger, "## (%d) - Finaliza el proceso", pcb_inicial->pid);
+
+// Loguear métricas al final
+log_info(logger,
+    "## (%d) - Métricas de estado: NEW (%d) (%.2f), READY (%d) (%.2f), EXEC (%d) (%.2f), EXIT (%d) (%.2f)",
+    pcb_inicial->pid,
+    pcb_inicial->metricas[NEW].cantidad, pcb_inicial->metricas[NEW].tiempo_total,
+    pcb_inicial->metricas[READY].cantidad, pcb_inicial->metricas[READY].tiempo_total,
+    pcb_inicial->metricas[EXEC].cantidad, pcb_inicial->metricas[EXEC].tiempo_total,
+    pcb_inicial->metricas[EXIT].cantidad, pcb_inicial->metricas[EXIT].tiempo_total
+);
 
     /*Conexion Memoria*/
     conexion = crear_conexion(IP_MEMORIA,PUERTO_MEMORIA);
@@ -102,6 +188,7 @@ int main(int argc, char* argv[]) {
     log_info(logger, "Kernel finalizando...");
     log_destroy(logger);
     config_destroy(config);
+    destruir_pcb(pcb_inicial);
     return 0;
 }
 
@@ -126,4 +213,36 @@ t_config *iniciar_config(void)
 		exit(EXIT_FAILURE);
 	}
 	return nuevo_config;
+}
+
+pcb_t* crear_pcb(int pid, int tamanio_memoria) {
+    pcb_t* pcb = malloc(sizeof(pcb_t));
+    pcb->pid = pid;
+    pcb->pc = 0;
+    pcb->tamanio_memoria = tamanio_memoria;
+    pcb->estado_actual = NEW;
+    pcb->tiempo_entrada_estado = time(NULL);
+
+    for (int i = 0; i < 7; i++) {
+        pcb->metricas[i].cantidad = 0;
+        pcb->metricas[i].tiempo_total = 0;
+    }
+
+    return pcb;
+}
+
+void cambiar_estado(pcb_t* pcb, estado_proceso nuevo_estado) {
+    time_t ahora = time(NULL);
+    double duracion = difftime(ahora, pcb->tiempo_entrada_estado);
+
+    int anterior = pcb->estado_actual;
+    pcb->metricas[anterior].cantidad += 1;
+    pcb->metricas[anterior].tiempo_total += duracion;
+
+    pcb->estado_actual = nuevo_estado;
+    pcb->tiempo_entrada_estado = ahora;
+}
+
+void destruir_pcb(pcb_t* pcb) {
+    free(pcb);
 }
