@@ -1,53 +1,4 @@
-#include <utils/hello.h>
 #include <kernel.h>
-#include <time.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <commons/log.h>
-#include <commons/config.h>
-#include <unistd.h>
-
-//TCB
-typedef enum {
-    NEW,
-    READY,
-    EXEC,
-    BLOCKED,
-    SUSPENDED_BLOCKED,
-    SUSPENDED_READY,
-    EXIT
-} estado_proceso;
-
-typedef struct {
-    int cantidad;
-    double tiempo_total;
-} metrica_estado;
-
-typedef struct {
-    int pid;
-    int pc;
-    int tamanio_memoria;
-    estado_proceso estado_actual;
-    metrica_estado metricas[7];
-    time_t tiempo_entrada_estado;
-} pcb_t;
-
-
-const char* nombre_estado(estado_proceso estado) {
-    switch (estado) {
-        case NEW: return "NEW";
-        case READY: return "READY";
-        case EXEC: return "EXEC";
-        case BLOCKED: return "BLOCKED";
-        case SUSPENDED_BLOCKED: return "SUSP. BLOCKED";
-        case SUSPENDED_READY: return "SUSP. READY";
-        case EXIT: return "EXIT";
-        default: return "DESCONOCIDO";
-    }
-}
-
 
 int main(int argc, char* argv[]) {
     /*
@@ -214,6 +165,20 @@ t_config *iniciar_config(void)
 	}
 	return nuevo_config;
 }
+
+const char* nombre_estado(estado_proceso estado) {
+    switch (estado) {
+        case NEW: return "NEW";
+        case READY: return "READY";
+        case EXEC: return "EXEC";
+        case BLOCKED: return "BLOCKED";
+        case SUSPENDED_BLOCKED: return "SUSP. BLOCKED";
+        case SUSPENDED_READY: return "SUSP. READY";
+        case EXIT: return "EXIT";
+        default: return "DESCONOCIDO";
+    }
+}
+
 
 pcb_t* crear_pcb(int pid, int tamanio_memoria) {
     pcb_t* pcb = malloc(sizeof(pcb_t));
