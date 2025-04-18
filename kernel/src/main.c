@@ -62,6 +62,18 @@ int main(int argc, char* argv[]) {
 
     logger = iniciar_logger(LOG_LEVEL);
 
+    /*Conexion Memoria*/
+    conexion = crear_conexion(IP_MEMORIA,PUERTO_MEMORIA);
+    if (conexion == -1) {
+    log_error(logger, "No se pudo establecer conexión con la Memoria");
+    return EXIT_FAILURE;
+    }
+    else {
+    log_info(logger, "Kernel se ha conectado a la memoria");
+    }
+
+
+    /*Conexion IO*/
     int socket_io = iniciar_servidor(PUERTO_ESCUCHA_IO,logger);
     if (socket_io == -1) {
     log_error(logger, "Fallo al iniciar servidor IO");
@@ -69,18 +81,27 @@ int main(int argc, char* argv[]) {
     }
 
     log_info(logger, "Kernel listo para recibir al peticiones");
-    int cliente_fd = esperar_cliente(socket_io,logger);
+    int cliente_IO_fd = esperar_cliente(socket_io,logger);
 
     saludar("kernel");
 
-    //Handshake
+    //Handshake IO
 
-    char* nombre_io = handshake(cliente_fd, logger);
+    char* nombre_io = handshake(cliente_IO_fd, logger);
     if (nombre_io != NULL) {
         log_info(logger, "IO conectado: %s", nombre_io);
         free(nombre_io);
     }
+    // Liberar recursos
+    //close(conexion_memoria);
+    close(socket_io);
+    //close(socket_dispatch);
+    //close(socket_interrupt);
+    close(cliente_IO_fd);
 
+    log_info(logger, "Kernel finalizando...");
+    log_destroy(logger);
+    config_destroy(config);
     return 0;
 }
 

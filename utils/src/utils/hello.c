@@ -156,8 +156,12 @@ int esperar_cliente(int socket_servidor,t_log* logger)
 {
 	// Aceptamos un nuevo cliente
 	int socket_cliente = accept(socket_servidor, NULL, NULL);
+	if (socket_cliente == -1) {
+		log_error(logger, "Error al aceptar conexión entrante");
+        return -1;
+	}
+	
 	log_info(logger, "Se conecto un cliente!");
-
 	return socket_cliente;
 }
 
