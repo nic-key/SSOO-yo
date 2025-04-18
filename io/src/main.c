@@ -56,7 +56,10 @@ int main(int argc, char* argv[]) {
     }
 
     // Liberar recursos y cerrar la interfaz
-
+    close(conexion);
+    log_info(logger, "[IO] Finalizando interfaz...");
+    log_destroy(logger);
+    config_destroy(config);
     return 0;
 }
 
