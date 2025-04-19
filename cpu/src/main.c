@@ -1,9 +1,15 @@
 #include <cpu.h>
 int main(int argc, char *argv[])
 {
+    if (argc != 2) {
+        printf("Error: Uso incorrecto.\n");
+        printf("Formato correcto: %s <nombre_interfaz>\n", argv[0]);
+        return 1; // Retorna código de error
+    }
+    char *nombre_interfaz = argv[1];
     saludar("cpu");
 
-    int conexion;
+    int conexion_kernel,conexion_memoria;
     char *IP_MEMORIA;
     char *PUERTO_MEMORIA;
     char *IP_KERNEL;
@@ -38,15 +44,30 @@ int main(int argc, char *argv[])
     logger = iniciar_logger(LOG_LEVEL);
 
     // Handshake con el kernel
-    conexion = crear_conexion(IP_KERNEL, PUERTO_KERNEL_DISPATCH);
-    if (conexion == -1)
+    conexion_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL_DISPATCH);
+    if (conexion_kernel == -1)
     {
         log_error(logger, "No se pudo establecer conexión con el Kernel");
         return EXIT_FAILURE;
     }
-    enviar_mensaje_handshake("CPU 01", conexion);
+    enviar_mensaje_handshake(nombre_interfaz, conexion_kernel);
     log_trace(logger, "[CPU] Enviando nombre de interfaz al kernel: CPU 01");
     // enviara al kernel el nombre de la interfaz y quedara esperando peticiones del mismo
+
+    //Conexion con la memoria
+    conexion_memoria = crear_conexion(IP_MEMORIA,PUERTO_MEMORIA);
+    if (conexion_memoria == -1)
+    {
+        log_error(logger, "No se pudo establecer conexión con la memoria");
+        return EXIT_FAILURE;
+    }
+    enviar_mensaje_handshake(nombre_interfaz, conexion_memoria);
+    log_trace(logger, "[CPU] Enviando nombre de interfaz a la memoria: CPU 01");
+
+    close(conexion_kernel);
+    close(conexion_memoria);
+    log_destroy(logger);
+    config_destroy(config);
 
     return 0;
 }
