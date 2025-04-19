@@ -128,6 +128,28 @@ int main(int argc, char *argv[])
     // Crear hilo para manejar CPU
     // pthread_create(&hilo_cpu, NULL, (void*)conexionCPU, NULL);
 
+    /*Conexion IO*/
+    int socket_io = iniciar_servidor(PUERTO_ESCUCHA_IO, logger);
+    if (socket_io == -1)
+    {
+        log_error(logger, "Fallo al iniciar servidor IO");
+    }
+
+    log_info(logger, "Kernel listo para recibir peticiones IO");
+    int cliente_IO_fd = esperar_cliente(socket_io, logger);
+
+    // Handshake IO
+
+    char *nombre_io = handshake(cliente_IO_fd, logger);
+    if (nombre_io != NULL)
+    {
+        log_info(logger, "IO conectado: %s", nombre_io);
+        free(nombre_io);
+    }
+    // Liberar recursos
+    close(socket_io);
+    close(cliente_IO_fd);
+    
     saludar("kernel");
 
     /*Conexion CPU*/
