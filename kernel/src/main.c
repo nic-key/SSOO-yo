@@ -126,20 +126,20 @@ int main(int argc, char *argv[])
     // Crear hilo para manejar IO
     pthread_create(
         &hilo_io,   // Donde guardar el ID del hilo
-        NULL,             // Atributos del hilo (NULL para por defecto)
-        conexionIO,       // La función que el hilo ejecutará
-        logger              // Argumento a pasar a la función del hilo
+        NULL,       // Atributos del hilo (NULL para por defecto)
+        conexionIO, // La función que el hilo ejecutará
+        logger      // Argumento a pasar a la función del hilo
     );
     // Crear hilo para manejar CPU
     pthread_create(
         &hilo_cpu,   // Donde guardar el ID del hilo
-        NULL,             // Atributos del hilo (NULL para por defecto)
-        conexionCPU,       // La función que el hilo ejecutará
-        logger              // Argumento a pasar a la función del hilo
+        NULL,        // Atributos del hilo (NULL para por defecto)
+        conexionCPU, // La función que el hilo ejecutará
+        logger       // Argumento a pasar a la función del hilo
     );
 
     pthread_join(hilo_io, NULL);
-	pthread_join(hilo_cpu, NULL);
+    pthread_join(hilo_cpu, NULL);
 
     saludar("kernel");
 
@@ -231,36 +231,42 @@ void destruir_pcb(pcb_t *pcb)
     free(pcb);
 }
 
-void* conexionIO(t_log *logger)
+void *conexionIO(t_log *logger)
 {
-    
+
     /*Conexion IO*/
     log_info(logger, "Intentando iniciar servidor IO...");
     int socket_io = iniciar_servidor(PUERTO_ESCUCHA_IO, logger);
     if (socket_io == -1)
     {
         log_error(logger, "Fallo al iniciar servidor IO");
-        return (void*)-1;
+        return (void *)-1;
     }
 
     log_info(logger, "Kernel listo para recibir peticiones IO");
-    int cliente_IO_fd = esperar_cliente(socket_io, logger);
 
-    // Handshake IO
-
-    char *nombre_io = handshake(cliente_IO_fd, logger);
-    if (nombre_io != NULL)
+    while (1)
     {
-        log_info(logger, "IO conectado: %s", nombre_io);
-        free(nombre_io);
+
+        int cliente_IO_fd = esperar_cliente(socket_io, logger);
+
+        // Handshake IO
+
+        char *nombre_io = handshake(cliente_IO_fd, logger);
+        if (nombre_io != NULL)
+        {
+            log_info(logger, "IO conectado: %s", nombre_io);
+            free(nombre_io);
+        }
+        close(cliente_IO_fd);
     }
+
     // Liberar recursos
     close(socket_io);
-    close(cliente_IO_fd);
     return NULL;
 }
 
-void* conexionCPU(t_log *logger)
+void *conexionCPU(t_log *logger)
 {
     /*Conexion CPU*/
     // Crear Espera de Listado CPU
@@ -274,12 +280,17 @@ void* conexionCPU(t_log *logger)
         log_error(logger, "Fallo al iniciar Dispatch CPU");
     }
     log_info(logger, "Kernel listo para recibir peticiones CPU");
-    int cliente_CPU_fd = esperar_cliente(socket_dispatch, logger);
-  
-    char *nombre_cpu = handshake(cliente_CPU_fd, logger);
-    if (nombre_cpu != NULL)
+    while (1)
     {
-        log_info(logger, "CPU conectado: %s", nombre_cpu);
+        int cliente_CPU_fd = esperar_cliente(socket_dispatch, logger);
+
+        char *nombre_cpu = handshake(cliente_CPU_fd, logger);
+        if (nombre_cpu != NULL)
+        {
+            log_info(logger, "CPU conectado: %s", nombre_cpu);
+        }
+
+        close(cliente_CPU_fd);
     }
 
     // Liberar recursos
