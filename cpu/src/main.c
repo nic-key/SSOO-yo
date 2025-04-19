@@ -1,6 +1,12 @@
 #include <cpu.h>
 int main(int argc, char *argv[])
 {
+    if (argc != 2) {
+        printf("Error: Uso incorrecto.\n");
+        printf("Formato correcto: %s <nombre_interfaz>\n", argv[0]);
+        return 1; // Retorna código de error
+    }
+    char *nombre_interfaz = argv[1];
     saludar("cpu");
 
     int conexion;
@@ -44,7 +50,7 @@ int main(int argc, char *argv[])
         log_error(logger, "No se pudo establecer conexión con el Kernel");
         return EXIT_FAILURE;
     }
-    enviar_mensaje_handshake("CPU 01", conexion);
+    enviar_mensaje_handshake(nombre_interfaz, conexion);
     log_trace(logger, "[CPU] Enviando nombre de interfaz al kernel: CPU 01");
     // enviara al kernel el nombre de la interfaz y quedara esperando peticiones del mismo
 
