@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
 	t_config *config;
 
     int conexion;
-	char *PUERTO_ESCUCHA_KERNEL;
+	char *PUERTO_ESCUCHA;
 	char *TAM_MEMORIA;
     char *TAM_PAGINA;
     char *ENTRADAS_POR_TABLA;
@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 
     config = iniciar_config();
 
-    PUERTO_ESCUCHA_KERNEL = config_get_string_value(config, "PUERTO_ESCUCHA_KERNEL");
+    PUERTO_ESCUCHA = config_get_string_value(config, "PUERTO_ESCUCHA");
     TAM_MEMORIA = config_get_string_value(config, "TAM_MEMORIA");
     TAM_PAGINA = config_get_string_value(config, "TAM_PAGINA");
     ENTRADAS_POR_TABLA = config_get_string_value(config, "ENTRADAS_POR_TABLA");
@@ -35,20 +35,34 @@ int main(int argc, char* argv[]) {
     logger = iniciar_logger(LOG_LEVEL);
 
     /*Conexion a kernel*/
-    int socket_memoria = iniciar_servidor(PUERTO_ESCUCHA_KERNEL,logger);
-    if (socket_memoria == -1) {
+    int socket_memoria_kernel = iniciar_servidor(PUERTO_ESCUCHA,logger);
+    if (socket_memoria_kernel == -1) {
     log_error(logger, "Fallo al iniciar Socket Memoria");
     return EXIT_FAILURE;
     }
 
     log_info(logger, "Memoria listo para recibir al peticiones");
-    int cliente_kernel_fd = esperar_cliente(socket_memoria,logger);
+    int cliente_kernel_fd = esperar_cliente(socket_memoria_kernel,logger);
     if (cliente_kernel_fd != -1){
     log_info(logger, "Se ha conectado el kernel a la memoria");
     }
     
+    /*Conexion CPU*/
+    int socket_memoria_cpu = iniciar_servidor(PUERTO_ESCUCHA,logger);
+    if (socket_memoria_cpu == -1) {
+    log_error(logger, "Fallo al iniciar Socket cpu");
+    return EXIT_FAILURE;
+    }
+
+    log_info(logger, "Memoria listo para recibir al peticiones");
+    int cliente_cpu_fd = esperar_cliente(socket_memoria_cpu,logger);
+    if (cliente_cpu_fd != -1){
+    log_info(logger, "Se ha conectado el cpu a la memoria");
+    }
+
     //Liberar recurso
-    close(socket_memoria);
+    close(socket_memoria_kernel);
+    close(socket_memoria_cpu);
     close(cliente_kernel_fd);
     
     log_info(logger, "Memoria finalizando...");
