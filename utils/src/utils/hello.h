@@ -36,9 +36,11 @@ typedef struct
 * @return No devuelve nada
 */
 
-//Funciones IO
+//Funciones Generales
 void saludar(char* quien);
 int crear_conexion(char* ip, char* puerto);
+
+//Funciones IO
 void liberar_conexion(int socket_cliente);
 void enviar_mensaje_handshake(char* mensaje, int socket);
 void enviar_mensaje(char* mensaje, int socket_cliente);
@@ -50,7 +52,6 @@ void* serializar_paquete(t_paquete* paquete, int bytes);
 
 //Server-Kernel
 void* recibir_buffer(int*, int);
-
 int iniciar_servidor(char* puerto,t_log* logger);
 int esperar_cliente(int socket_cliente,t_log* logger);
 t_list* recibir_paquete(int);

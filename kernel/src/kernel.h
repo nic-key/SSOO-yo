@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 // Define pcb_t or include the appropriate header file
 //TCB
@@ -47,4 +48,7 @@ const char* nombre_estado(estado_proceso estado);
 pcb_t* crear_pcb(int pid, int tamanio_memoria);
 void cambiar_estado(pcb_t* pcb, estado_proceso nuevo_estado);
 void destruir_pcb(pcb_t* pcb);
+void conexionIO();
+void conexionCPU();
+
 #endif /*END KERNEL_H_*/
