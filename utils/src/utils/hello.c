@@ -1,6 +1,6 @@
 #include <utils/hello.h>
 
-t_log* logger;
+extern t_log* logger;
 
 void saludar(char* quien) {
     printf("Hola desde %s!!\n", quien);

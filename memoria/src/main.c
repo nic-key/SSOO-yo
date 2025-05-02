@@ -1,13 +1,34 @@
 #include <utils/hello.h>
 #include <memoria.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+t_log *logger = NULL;
+t_config *config;
+
+void* manejar_cliente(void* socket_fd_void) { //El hilo que atiendo al cliente
+    int socket_cliente = *(int*)socket_fd_void;
+    free(socket_fd_void);
+
+    log_info(logger, "Nuevo cliente conectado. FD: %d", socket_cliente);
+
+    char* nombre = handshake(socket_cliente, logger);
+    if (nombre != NULL) {
+        log_info(logger, "Identificado cliente: %s", nombre);
+        free(nombre);
+    }
+
+    //Logica para manejar peticiones
+
+    close(socket_cliente);
+    pthread_exit(NULL);
+}
+
 int main(int argc, char* argv[]) {
     saludar("memoria");
 
-
-    t_log *logger;
-	t_config *config;
-
-    int conexion;
+    //int conexion;
 	char *PUERTO_ESCUCHA;
 	char *TAM_MEMORIA;
     char *TAM_PAGINA;
@@ -33,38 +54,31 @@ int main(int argc, char* argv[]) {
     DUMP_PATH = config_get_string_value(config, "DUMP_PATH");
 
     logger = iniciar_logger(LOG_LEVEL);
-
-    /*Conexion a kernel*/
-    int socket_memoria_kernel = iniciar_servidor(PUERTO_ESCUCHA,logger);
-    if (socket_memoria_kernel == -1) {
-    log_error(logger, "Fallo al iniciar Socket Memoria");
-    return EXIT_FAILURE;
-    }
-
-    log_info(logger, "Memoria listo para recibir al peticiones");
-    int cliente_kernel_fd = esperar_cliente(socket_memoria_kernel,logger);
-    if (cliente_kernel_fd != -1){
-    log_info(logger, "Se ha conectado el kernel a la memoria");
-    }
     
-    /*Conexion CPU*/
-    int socket_memoria_cpu = iniciar_servidor(PUERTO_ESCUCHA,logger);
-    if (socket_memoria_cpu == -1) {
-    log_error(logger, "Fallo al iniciar Socket cpu");
-    return EXIT_FAILURE;
+    int socket_servidor = iniciar_servidor(PUERTO_ESCUCHA, logger);
+    if (socket_servidor == -1) {
+        log_error(logger, "Fallo al iniciar socket de escucha");
+        return EXIT_FAILURE;
     }
 
-    log_info(logger, "Memoria listo para recibir al peticiones");
-    int cliente_cpu_fd = esperar_cliente(socket_memoria_cpu,logger);
-    if (cliente_cpu_fd != -1){
-    log_info(logger, "Se ha conectado el cpu a la memoria");
+    log_info(logger, "Memoria escuchando conexiones en puerto %s", PUERTO_ESCUCHA);
+
+    // Loop principal de aceptación de clientes
+    while (1) {
+        int* socket_cliente = malloc(sizeof(int));
+        *socket_cliente = esperar_cliente(socket_servidor, logger);
+
+        if (*socket_cliente != -1) {
+            pthread_t hilo_cliente;
+            pthread_create(&hilo_cliente, NULL, manejar_cliente, socket_cliente);
+            pthread_detach(hilo_cliente); // No bloquea ni hay que hacer join
+        } else {
+            free(socket_cliente);
+        }
     }
 
     //Liberar recurso
-    close(socket_memoria_kernel);
-    close(socket_memoria_cpu);
-    close(cliente_kernel_fd);
-    
+    close(socket_servidor);
     log_info(logger, "Memoria finalizando...");
     log_destroy(logger);
     config_destroy(config);
