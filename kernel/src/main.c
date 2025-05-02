@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     // Para correr sin necesidad de los parametros
 
-    if (argc == 3)
+    if (argc == 3)//intenta abrir un archivo de pseudogodigo y guarda el tamaño y muestra si esta en modo proceso o modo servidor
     {
         archivo = argv[1];
         tamanio_proceso = atoi(argv[2]);
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     t_config *config;
     pthread_t hilo_io, hilo_cpu;
 
-    config = iniciar_config();
+    config = iniciar_config(); //lee el archivo ../kernel.config y guarda los valores de abajo (IP_MEMORIA), etc, desde el archivo
 
     IP_MEMORIA = config_get_string_value(config, "IP_MEMORIA");
     PUERTO_MEMORIA = config_get_string_value(config, "PUERTO_MEMORIA");
@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
     TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
     LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
 
-    logger = iniciar_logger(LOG_LEVEL);
+    logger = iniciar_logger(LOG_LEVEL);//crea kernel.log para registrar eventos
 
-    pcb_t *pcb_inicial = crear_pcb(0, tamanio_proceso);
+    pcb_t *pcb_inicial = crear_pcb(0, tamanio_proceso);//crea pcb inicial, si hay archivo cargado
 
     if (!pcb_inicial)
     {
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     */
 
     /*Conexion Memoria*/
-    conexion = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);
+    conexion = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA);//se conecta a memoria
     if (conexion == -1)
     {
         log_error(logger, "No se pudo establecer conexión con la Memoria");
@@ -138,12 +138,12 @@ int main(int argc, char *argv[])
         logger       // Argumento a pasar a la función del hilo
     );
 
-    pthread_join(hilo_io, NULL);
+    pthread_join(hilo_io, NULL);//espera que terminen los hilos
     pthread_join(hilo_cpu, NULL);
 
     saludar("kernel");
 
-    log_info(logger, "Kernel finalizando...");
+    log_info(logger, "Kernel finalizando...");//limpieza y salida
     log_destroy(logger);
     config_destroy(config);
     destruir_pcb(pcb_inicial);
